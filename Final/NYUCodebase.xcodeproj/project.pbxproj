@@ -26,6 +26,8 @@
 		E22CE7BE21C2BC4B004567FB /* end.wav in Resources */ = {isa = PBXBuildFile; fileRef = E22CE7BC21C2BC4A004567FB /* end.wav */; };
 		E22CE7BF21C2BC4B004567FB /* hit.wav in Resources */ = {isa = PBXBuildFile; fileRef = E22CE7BD21C2BC4A004567FB /* hit.wav */; };
 		E22CE7C121C2BF90004567FB /* Null Sleep.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = E22CE7C021C2BF90004567FB /* Null Sleep.mp3 */; };
+		E22CE7D021C3211A004567FB /* 1.png in Resources */ = {isa = PBXBuildFile; fileRef = E22CE7CE21C3211A004567FB /* 1.png */; };
+		E22CE7D121C3211A004567FB /* 2.png in Resources */ = {isa = PBXBuildFile; fileRef = E22CE7CF21C3211A004567FB /* 2.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +56,8 @@
 		E22CE7BC21C2BC4A004567FB /* end.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = end.wav; sourceTree = "<group>"; };
 		E22CE7BD21C2BC4A004567FB /* hit.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hit.wav; sourceTree = "<group>"; };
 		E22CE7C021C2BF90004567FB /* Null Sleep.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Null Sleep.mp3"; sourceTree = "<group>"; };
+		E22CE7CE21C3211A004567FB /* 1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 1.png; sourceTree = "<group>"; };
+		E22CE7CF21C3211A004567FB /* 2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 2.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +151,8 @@
 				E22CE7BD21C2BC4A004567FB /* hit.wav */,
 				E22CE7BA21C2BC46004567FB /* power.wav */,
 				E22CE7C021C2BF90004567FB /* Null Sleep.mp3 */,
+				E22CE7CE21C3211A004567FB /* 1.png */,
+				E22CE7CF21C3211A004567FB /* 2.png */,
 			);
 			name = Code;
 			sourceTree = "<group>";
@@ -211,6 +217,8 @@
 				6DEF23C11B96CC2600BCE792 /* fragment.glsl in Resources */,
 				6DE9D2F11BA6AB8C002D599C /* fragment_textured.glsl in Resources */,
 				6D5A86C619AE5C710066C1FD /* Images.xcassets in Resources */,
+				E22CE7D021C3211A004567FB /* 1.png in Resources */,
+				E22CE7D121C3211A004567FB /* 2.png in Resources */,
 				E22CE7B321C16C27004567FB /* font1.png in Resources */,
 				E22CE7BB21C2BC46004567FB /* power.wav in Resources */,
 				6D5A86BE19AE5C710066C1FD /* Credits.rtf in Resources */,

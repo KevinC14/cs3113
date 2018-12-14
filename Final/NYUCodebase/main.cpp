@@ -19,12 +19,12 @@
 #else
 #define RESOURCE_FOLDER "NYUCodebase.app/Contents/Resources/"
 #endif
-#define FIXED_TIMESTEP 0.016666f
+#define FIXED_TIMESTEP 0.0166f
 #define MAX_TIMESTEPS 6
 using namespace std;
 using namespace glm;
 enum GameMode {TITLE_SCREEN,SENT_BACK,GAME_SCREEN1,ADVANTAGE_SCREEN,GAME_SCREEN2,WINNING_SCREEN,GAME_SCREEN3,GAME_OVER};
-GameMode mode = TITLE_SCREEN;
+GameMode mode = GAME_SCREEN2;
 
 //---------------------------------------------------Variables--------------------------------------------------------------
 //Universal Stuff
@@ -32,6 +32,8 @@ SDL_Window* displayWindow;
 ShaderProgram program;
 ShaderProgram textprogram;
 GLuint font_texture;
+GLuint neon2Pic;
+GLuint neon1Pic;
 
 //Matrices
 mat4 projectionMatrix = mat4(1.0f);
@@ -55,12 +57,17 @@ float lastFrameTicks = 0.0f;
 //Ball movements
 float ballPositionX = 0;
 float ballPositionY = 0;
-float modifierX = 1;
-float modifierY = 1;
+float directX = 1;
+float directY = 1;
 bool moveBall = false;
+float angle = -45.0f * (3.1415926f/180.0f);
+
+//Effects
+bool colorswap = false;
+float adjColor = 0;
 float bounce = 1;
 int hold = 0;
-float angle = -45.0f * (3.1415926f/180.0f);
+bool show = false;
 
 //Block movements
 float rightY = 0;
@@ -92,6 +99,8 @@ float boxes[] = {-0.05f,-0.25f, 0.05f,-0.25f, 0.05f,0.25f, -0.05f,-0.25f, 0.05f,
 float boxes2[] = {-0.45f,-0.05f, 0.45f,-0.05f, 0.45f,0.05f, -0.45f,-0.05f, 0.45f,0.05f, -0.45f,0.05f};
 float ball[] = {-0.05f,-0.05f, 0.05f,-0.05f, 0.05f,0.05f, -0.05f,-0.05f, 0.05f,0.05f, -0.05f,0.05f};
 float pUp[] = {-0.1f,-0.1f,0.1f,-0.1f,0.1f,0.1f,-0.1f,-0.1f,0.1f,0.1f,-0.1f,0.1f};
+float texV[] = {0.0f,1.0f,1.0f,1.0,1.0,0.0f,0.0f,1.0f,1.0f,0.0f,0.0f,0.0f};
+float bamV[] = {-0.5,-0.5,0.5,-0.5,0.5,0.5,-0.5,-0.5,0.5,0.5,-0.5,0.5};
 deque<float> prevCords;
 random_device rd;
 //-----------------------------------------------Functions to Load/Write--------------------------------------------------------
@@ -138,6 +147,21 @@ void DrawText(ShaderProgram &program, int fontTexture, string text, float size, 
     program.SetModelMatrix(textMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 6 * text.size());
 }
+void DrawPic(ShaderProgram &program, int itemID, float *posV, float *texV, float x, float y){
+    glBindTexture(GL_TEXTURE_2D, itemID);
+    
+    glUseProgram(program.programID);
+    
+    glVertexAttribPointer(program.positionAttribute, 2, GL_FLOAT, false, 0, posV);
+    glEnableVertexAttribArray(program.positionAttribute);
+    glVertexAttribPointer(program.texCoordAttribute, 2, GL_FLOAT, false, 0, texV);
+    glEnableVertexAttribArray(program.texCoordAttribute);
+    
+    textMatrix = mat4(1.0f);
+    textMatrix = translate(textMatrix, glm::vec3(x,y,0.0f));
+    program.SetModelMatrix(textMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
 GLuint LoadTexture(const char* filePath) {
     int w, h, comp;
     unsigned char* image = stbi_load(filePath, &w, &h, &comp, STBI_rgb_alpha);
@@ -164,6 +188,9 @@ void drawBordersHor(){
     glVertexAttribPointer(program.positionAttribute,2,GL_FLOAT,false,0,vertices);
     glEnableVertexAttribArray(program.positionAttribute);
     
+    if(colorswap == true){
+        program.SetColor(1.0f,1.0f-adjColor, 0.0f, 1.0f);
+    }
     //Up
     modelMatrix = glm::mat4(1.0f);
     modelMatrix = glm::translate(modelMatrix,glm::vec3(0.0f,1.0f,0.0f));
@@ -189,12 +216,16 @@ void drawBordersHor(){
         glDrawArrays(GL_TRIANGLES, 0, 6);
         y += .15;
     }
+    DrawPic(textprogram, neon1Pic, bamV, texV, -1.0f, 0.0f);
+    DrawPic(textprogram, neon2Pic,bamV,texV, 1.0f, 0.0f);
 }
 void drawBordersVer(){
     float vertices[] = {-.1f,-3.45f, .1f,-3.45f, 0.1f,3.45f, -0.1f,-3.45f,0.1f,3.45f,-0.1f,3.45f};
     glVertexAttribPointer(program.positionAttribute,2,GL_FLOAT,false,0,vertices);
     glEnableVertexAttribArray(program.positionAttribute);
-    
+    if(colorswap == true){
+        program.SetColor(1.0f,1.0f-adjColor, 0.0f, 1.0f);
+    }
     //Right
     modelMatrix = glm::mat4(1.0f);
     modelMatrix = glm::translate(modelMatrix,glm::vec3(1.77f,0.0f,0.0f));
@@ -220,6 +251,8 @@ void drawBordersVer(){
         glDrawArrays(GL_TRIANGLES, 0, 6);
         x += .15;
     }
+    DrawPic(textprogram, neon1Pic, bamV, texV, 0.0f, 0.5f);
+    DrawPic(textprogram, neon2Pic,bamV,texV, 0.0f, -0.5f);
 }
 
 //For tail affect
@@ -240,8 +273,8 @@ void reset(){
     downY = 0;
     leftY = 0;
     
-    modifierX = 1;
-    modifierY = 1;
+    directX = 1;
+    directY = 1;
     adj = 1;
     prevadj = 0;
     moveBall = false;
@@ -268,15 +301,25 @@ void generateItem(float xneg, float xpos, float yneg, float ypos){
 }
 
 void generateStarting(){
-    uniform_real_distribution<float> dist(0,1);
-    uniform_real_distribution<float> dist2(0,1);
-    modifierX = dist(rd);
-    modifierY = dist2(rd);
+    uniform_real_distribution<> dist(0,2);
+    uniform_real_distribution<> dist2(0,2);
+    if(dist(rd) <= 1){
+        directX = -1;
+    }
+    else{
+        directX = 1;
+    }
+    if(dist2(rd) <= 1){
+        directY = -1;
+    }
+    else{
+        directY = 1;
+    }
 }
 //Draw Powerups
 //Item is twice size of ball
 //Will be randomly generated somewhere on the field
-void drawPowerUp(){
+void drawPowerUp(string pu){
     program.SetColor(1.0f,0.0f,0.0f,1.0f);
     if(powerUpPlaced == false){
         generateItem(-1.777 + boxH + pSize, 1.777f - boxH - pSize, -1.0 + borW + pSize, 1.0f - borW - pSize);
@@ -290,6 +333,8 @@ void drawPowerUp(){
         pUpMatrix = translate(pUpMatrix,vec3(itemX,itemY,1.0f));
         program.SetModelMatrix(pUpMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+        DrawText(textprogram, font_texture,pu, 0.20f, 0.0f, itemX, itemY);
     }
 }
 //RIGHT & DOWN ARE B, LEFT & UP ARE A
@@ -297,7 +342,9 @@ void checkCollisions(){
     // Top or Bottom Collision
     if(mode == GAME_SCREEN1 or mode == GAME_SCREEN3){
         if ((abs(ballPositionY - 1.0f) - (0.1f + 0.2f)/2) <= 0 or (abs(ballPositionY + 1.0f) - (0.1f + 0.2f)/2) <= 0){
-            modifierY *= -1;
+            colorswap = true;
+            adjColor += 0.03;
+            directY *= -1;
             adj += 0.05;
             Mix_PlayChannel(-1,hitSound,0);
             bounce = 1.5;
@@ -306,14 +353,14 @@ void checkCollisions(){
         // MovingBox Collision
         if (abs(ballPositionY - rightY) - (0.3f) <= 0 and abs(ballPositionX - 1.73f) - (0.1f) <= 0){
             if(prevadj != 0){adj = prevadj; prevadj = 0;}
-            modifierX *= -1;
+            directX *= -1;
             adj += 0.05;
             bounce = 1.5;
             Mix_PlayChannel(-1,hitSound,0);
         }
         else if (abs(ballPositionY - leftY) - (0.3f) <= 0 and abs(ballPositionX + 1.73f) - (0.1f) <= 0){
             if(prevadj != 0){adj = prevadj; prevadj = 0;}
-            modifierX *= -1;
+            directX *= -1;
             adj += 0.05;
             bounce = 1.5;
             Mix_PlayChannel(-1,hitSound,0);
@@ -325,7 +372,6 @@ void checkCollisions(){
             prevadj = adj;
             adj += 1.0;
             bounce = 1.5;
-            cout << adj << endl;
         }
         //End game collision
         //RIGHT or PLAYER 1 WINS
@@ -385,7 +431,9 @@ void checkCollisions(){
     else if(mode == GAME_SCREEN2){
         //Borders
         if ((abs(ballPositionX - 1.73f) - (0.1f + 0.2f)/2) <= 0 or (abs(ballPositionX + 1.73f) - (0.1f + 0.2f)/2) <= 0){
-            modifierX *= -1;
+            colorswap = true;
+            adjColor += 0.02;
+            directX *= -1;
             adj += 0.05;
             bounce = 1.5;
             Mix_PlayChannel(-1,hitSound,0);
@@ -393,13 +441,14 @@ void checkCollisions(){
         // Box
         //Up
         if (abs(ballPositionY - 0.95) - (boxH+ballSize)/2 <= 0 and abs(ballPositionX - upY) - (boxW+ballSize)/2 <= 0){
-            modifierY *= -1;
+            directY *= -1;
             adj += 0.05;
+            bounce = 1.5;
             Mix_PlayChannel(-1,hitSound,0);
         }
         //Down
         else if (abs(ballPositionY + 0.95) - (boxH+ballSize)/2 <= 0 and abs(ballPositionX - downY) - (boxW+ballSize)/2 <= 0){
-            modifierY *= -1;
+            directY *= -1;
             adj += 0.05;
             bounce = 1.5;
             Mix_PlayChannel(-1,hitSound,0);
@@ -442,7 +491,7 @@ void Setup(){
     #ifdef _WINDOWS
         glewInit();
     #endif
-    glClearColor(0.50f,0.50f,0.50f,1.0f);
+    glClearColor(0.0f,0.0f,0.0f,1.0f);
     
     //programs
     projectionMatrix = glm::ortho(-1.777f, 1.777f, -1.0f, 1.0f, -1.0f, 1.0f);
@@ -456,6 +505,11 @@ void Setup(){
     glUseProgram(program.programID);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    //Textures
+    font_texture = LoadTexture(RESOURCE_FOLDER"font1.png");
+    neon1Pic = LoadTexture(RESOURCE_FOLDER"1.png");
+    neon2Pic = LoadTexture(RESOURCE_FOLDER"2.png");
     
     //SOUND
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
@@ -491,18 +545,18 @@ void Update(float elapsed){
         }
     }
     else if (mode == GAME_SCREEN2){
-        if(keys[SDL_SCANCODE_RIGHT] and upY < 1.215){
-            upY += elapsed * adj;
-        }
-        if(keys[SDL_SCANCODE_LEFT] and upY > -1.215){
-            upY -= elapsed * adj;
-        }
-        // D/A to move left
-        if(keys[SDL_SCANCODE_D] and downY < 1.215){
+        if(keys[SDL_SCANCODE_RIGHT] and downY < 1.215){
             downY += elapsed * adj;
         }
-        if(keys[SDL_SCANCODE_A] and downY >  -1.215){
+        if(keys[SDL_SCANCODE_LEFT] and downY > -1.215){
             downY -= elapsed * adj;
+        }
+        // D/A to move left
+        if(keys[SDL_SCANCODE_D] and upY < 1.215){
+            upY += elapsed * adj;
+        }
+        if(keys[SDL_SCANCODE_A] and upY > -1.215){
+            upY -= elapsed * adj;
         }
     }
     else if (mode == TITLE_SCREEN or mode == GAME_OVER){
@@ -510,14 +564,13 @@ void Update(float elapsed){
     }
     if (moveBall == true){
         adjustcoords(ballPositionX,ballPositionY);
-        ballPositionX += modifierX * elapsed * adj * 0.75;
-        ballPositionY += modifierY * elapsed * adj * 0.75;
+        ballPositionX += directX * elapsed * adj * 0.75;
+        ballPositionY += directY * elapsed * adj * 0.75;
     }
 }
 void Render(float elapsed){
     glClear(GL_COLOR_BUFFER_BIT);
     program.SetColor(1.0f,1.0f,1.0f,1.0f);
-    font_texture = LoadTexture(RESOURCE_FOLDER"font1.png");
     if(mode == TITLE_SCREEN){
         DrawText(textprogram, font_texture, "Welcome To", .25f, 0.0f,-1.15f,0.5f);
         DrawText(textprogram,font_texture,"Ultimate PONG",.225f,0.0f,-1.35f,-0.25f);
@@ -545,7 +598,7 @@ void Render(float elapsed){
             
             //introduce items
             if(mode == GAME_SCREEN3){
-                drawPowerUp();
+                drawPowerUp("S");
             }
         }
         else if (mode == GAME_SCREEN2){
@@ -574,7 +627,7 @@ void Render(float elapsed){
         
         float scaling = 0;
         for(int x = 0; x < prevCords.size(); x+=2){
-            program.SetColor(1.0f,0.0f+scaling,0.0f,1.0f);
+            program.SetColor(1.0f,scaling,0.0f,1.0f);
             tailMatrix = mat4(1.0f);
             tailMatrix = translate(tailMatrix, vec3(prevCords[x],prevCords[x+1],0.0f));
             tailMatrix = scale(tailMatrix, vec3(1.0f-scaling,1.0f-scaling,1.0f));
@@ -584,15 +637,21 @@ void Render(float elapsed){
             scaling += 0.05f;
         }
         program.SetColor(1.0f,1.0f,1.0f,1.0f);
-        angle += elapsed * 10;
+        angle += elapsed * 25;
         ballMatrix = mat4(1.0f);
         ballMatrix = translate(ballMatrix, vec3(ballPositionX,ballPositionY,0.0f));
         ballMatrix = scale(ballMatrix, vec3(bounce,bounce,1.0f));
         ballMatrix = rotate(ballMatrix,angle,vec3(0.0f,0.0f,1.0f));
-        hold++;
+        
+        //For effects
+        if (bounce != 1 or colorswap == true or show == true){
+            hold++;
+        }
         if(hold == 12){
             bounce = 1;
             hold = 0;
+            colorswap = false;
+            show = false;
         }
         program.SetModelMatrix(ballMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 6);
