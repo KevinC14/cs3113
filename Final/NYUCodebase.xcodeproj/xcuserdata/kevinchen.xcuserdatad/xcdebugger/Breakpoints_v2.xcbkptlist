@@ -10,27 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NYUCodebase/main.cpp"
-            timestampString = "566436825.161671"
+            timestampString = "566516248.272373"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "260"
-            endingLineNumber = "260"
-            landmarkName = "adjustcoords(float x, float y)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "NYUCodebase/main.cpp"
-            timestampString = "566436825.1626281"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "630"
-            endingLineNumber = "630"
+            startingLineNumber = "673"
+            endingLineNumber = "673"
             landmarkName = "Render(float elapsed)"
             landmarkType = "9">
          </BreakpointContent>
@@ -42,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NYUCodebase/main.cpp"
-            timestampString = "566436825.163424"
+            timestampString = "566516248.273285"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "633"
-            endingLineNumber = "633"
+            startingLineNumber = "676"
+            endingLineNumber = "676"
             landmarkName = "Render(float elapsed)"
             landmarkType = "9">
          </BreakpointContent>
@@ -58,11 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NYUCodebase/main.cpp"
-            timestampString = "566436825.1643111"
+            timestampString = "566516248.274189"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "635"
-            endingLineNumber = "635"
+            startingLineNumber = "678"
+            endingLineNumber = "678"
             landmarkName = "Render(float elapsed)"
             landmarkType = "9">
          </BreakpointContent>
@@ -74,13 +58,29 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NYUCodebase/main.cpp"
-            timestampString = "566436825.164966"
+            timestampString = "566516248.2750061"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "301"
-            endingLineNumber = "301"
-            landmarkName = "generateItem(float xneg, float xpos, float yneg, float ypos)"
+            startingLineNumber = "299"
+            endingLineNumber = "299"
+            landmarkName = "generateItem(float xneg, float xpos, float yneg, float ypos, int type)"
             landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NYUCodebase/state.hpp"
+            timestampString = "566513378.968554"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "12"
+            endingLineNumber = "12"
+            landmarkName = "unknown"
+            landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -23,8 +23,8 @@
 #define MAX_TIMESTEPS 6
 using namespace std;
 using namespace glm;
-enum GameMode {TITLE_SCREEN,SENT_BACK,GAME_SCREEN1,ADVANTAGE_SCREEN,GAME_SCREEN2,WINNING_SCREEN,GAME_SCREEN3,GAME_OVER};
-GameMode mode = GAME_SCREEN2;
+enum GameMode {TITLE_SCREEN,TUTORIAL_SCREEN,GAME_SCREEN1,ADVANTAGE_SCREEN,GAME_SCREEN2,WINNING_SCREEN,GAME_SCREEN3,SENT_BACK,GAME_OVER};
+GameMode mode = GAME_SCREEN3;
 
 //---------------------------------------------------Variables--------------------------------------------------------------
 //Universal Stuff
@@ -48,6 +48,8 @@ mat4 textMatrix = mat4(1.0f);
 int p1score = 0;
 int p2score = 0;
 bool powerUpPlaced = false;
+bool spikePlaced = false;
+bool slowPlaced = false;
 
 float accumulator = 0.0f;
 SDL_Event event;
@@ -77,12 +79,14 @@ float downY = 0;
 float adj = 1;
 float prevadj = 0;
 
-float itemX = -10;
-float itemY = -10;
+vector<float> itemX = {-10,-10,-10};
+vector<float> itemY = {-10,-10,-10};
+
 
 //Dimensions for Screen 2, flip for S1 & 3
 float boxH = 0.1f;
-float boxW = 0.9f;
+float boxW = 0.9f; //Only for S2
+float boxW2 = 0.5f; //Only for S1/S3
 float borH = 3.45f;
 float borW = 0.2f;
 float ballSize = 0.1f;
@@ -254,7 +258,7 @@ void drawBordersVer(){
     DrawPic(textprogram, neon1Pic, bamV, texV, 0.0f, 0.5f);
     DrawPic(textprogram, neon2Pic,bamV,texV, 0.0f, -0.5f);
 }
-
+//----------------------------------------------------Helpers-----------------------------------------------------------------
 //For tail affect
 void adjustcoords(float x, float y){
     prevCords.push_front(y);
@@ -279,27 +283,20 @@ void reset(){
     prevadj = 0;
     moveBall = false;
     powerUpPlaced = false;
+    spikePlaced = false;
+    slowPlaced = false;
     
-    itemX = -10;
-    itemY = -10;
+    itemX = {-10,-10,-10};
+    itemY = {-10,-10,-10};
     prevCords.clear();
 }
-//Removes sounds
-void CleanSounds() {
-    Mix_FreeChunk(powSound);
-    Mix_FreeChunk(endSound);
-    Mix_FreeChunk(hitSound);
-    
-    Mix_FreeMusic(bgMusic);
-}
 //Randomly Generate Stuff
-void generateItem(float xneg, float xpos, float yneg, float ypos){
+void generateItem(float xneg, float xpos, float yneg, float ypos, int type){
     uniform_real_distribution<float> dist(xneg,xpos);
     uniform_real_distribution<float> dist2(yneg,ypos);
-    itemX = dist(rd);
-    itemY = dist2(rd);
+    itemX[type] = dist(rd);
+    itemY[type] = dist2(rd);
 }
-
 void generateStarting(){
     uniform_real_distribution<> dist(0,2);
     uniform_real_distribution<> dist2(0,2);
@@ -319,24 +316,37 @@ void generateStarting(){
 //Draw Powerups
 //Item is twice size of ball
 //Will be randomly generated somewhere on the field
-void drawPowerUp(string pu){
+void drawPowerUp(){
     program.SetColor(1.0f,0.0f,0.0f,1.0f);
     if(powerUpPlaced == false){
-        generateItem(-1.777 + boxH + pSize, 1.777f - boxH - pSize, -1.0 + borW + pSize, 1.0f - borW - pSize);
+        generateItem(-1.777 + boxH + pSize, 1.777f - boxH - pSize, -1.0 + borW + pSize, 1.0f - borW - pSize, 0);
         powerUpPlaced = true;
     }
-    if(itemX != -10.0f and itemY != -10.0f){
-        glVertexAttribPointer(program.positionAttribute,2,GL_FLOAT,false,0,pUp);
-        glEnableVertexAttribArray(program.positionAttribute);
-        
+    if(spikePlaced == false){
+        generateItem(-1.777 + boxH + pSize, 1.777f - boxH - pSize, -1.0 + borW + pSize, 1.0f - borW - pSize, 1);
+        spikePlaced = true;
+    }
+    
+     if(slowPlaced == false){
+     generateItem(-1.777 + boxH + pSize, 1.777f - boxH - pSize, -1.0 + borW + pSize, 1.0f - borW - pSize, 2);
+     slowPlaced = true;
+     }
+
+    glVertexAttribPointer(program.positionAttribute,2,GL_FLOAT,false,0,pUp);
+    glEnableVertexAttribArray(program.positionAttribute);
+    
+    for(int i = 0; i < itemX.size(); i++){
         pUpMatrix = mat4(1.0f);
-        pUpMatrix = translate(pUpMatrix,vec3(itemX,itemY,1.0f));
+        pUpMatrix = translate(pUpMatrix,vec3(itemX[i],itemY[i],1.0f));
         program.SetModelMatrix(pUpMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         
-        DrawText(textprogram, font_texture,pu, 0.20f, 0.0f, itemX, itemY);
     }
+    DrawText(textprogram, font_texture,"A", 0.20f, 0.0f, itemX[0], itemY[0]);
+    DrawText(textprogram, font_texture,"S", 0.20f, 0.0f, itemX[1], itemY[1]);
+    DrawText(textprogram, font_texture,"D",0.2f,0.0f,itemX[2],itemY[2]);
 }
+//-------------------------------------------------Check collisions----------------------------------------------------------
 //RIGHT & DOWN ARE B, LEFT & UP ARE A
 void checkCollisions(){
     // Top or Bottom Collision
@@ -350,54 +360,34 @@ void checkCollisions(){
             bounce = 1.5;
         }
         
-        // MovingBox Collision
-        if (abs(ballPositionY - rightY) - (0.3f) <= 0 and abs(ballPositionX - 1.73f) - (0.1f) <= 0){
-            if(prevadj != 0){adj = prevadj; prevadj = 0;}
-            directX *= -1;
-            adj += 0.05;
-            bounce = 1.5;
-            Mix_PlayChannel(-1,hitSound,0);
-        }
-        else if (abs(ballPositionY - leftY) - (0.3f) <= 0 and abs(ballPositionX + 1.73f) - (0.1f) <= 0){
-            if(prevadj != 0){adj = prevadj; prevadj = 0;}
-            directX *= -1;
-            adj += 0.05;
-            bounce = 1.5;
-            Mix_PlayChannel(-1,hitSound,0);
-        }
-        //power up collision
-        else if ((abs(ballPositionX - itemX) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY) - (ballSize + pSize)/2 <= 0)){
-            powerUpPlaced = false;
-            Mix_PlayChannel(-1, powSound, 0);
-            prevadj = adj;
-            adj += 1.0;
-            bounce = 1.5;
-        }
         //End game collision
         //RIGHT or PLAYER 1 WINS
         else if (abs(ballPositionX - 1.777f) - (0.1f) <= 0){
             Mix_PlayChannel(-1,endSound,0);
             if(mode == GAME_SCREEN1){
-                if(p1score == 0){
-                    p1score = 1;
-                    p2score = 0;
-                    mode = ADVANTAGE_SCREEN;
-                    reset();
-                }
+                p1score++;
+                mode = ADVANTAGE_SCREEN;
+                reset();
             }
             else if (mode == GAME_SCREEN3){
-                if(p1score == 2){
+                //p1 wins, p1 is winning
+                if(p1score > p2score){
                     p1score++;
                     mode = GAME_OVER;
                     reset();
                 }
-                else if(p2score == 2){
+                //P1 wins, p2 is winning
+                else if(p2score > p1score){
                     p2score = 0;
                     p1score = 0;
                     mode = SENT_BACK;
                     reset();
                 }
+                //Other situations, just clear
                 else{
+                    p1score = 0;
+                    p2score = 0;
+                    reset();
                     mode = SENT_BACK;
                 }
             }
@@ -411,21 +401,65 @@ void checkCollisions(){
                 reset();
             }
             else{
-                if(p2score == 2){
+                //p2 wins, p2 is leading
+                if(p2score>p1score){
                     p2score++;
                     mode = GAME_OVER;
                     reset();
                 }
-                else if(p1score == 2){
-                    p2score = 0;
+                //p2 wins, p1 is leading
+                else if(p1score > p2score){
                     p1score = 0;
                     mode = SENT_BACK;
                     reset();
                 }
+                //clear
                 else{
+                    p1score = 0;
+                    p2score = 0;
+                    reset();
                     mode = SENT_BACK;
                 }
             }
+        }
+        // MovingBox Collision
+        else if (abs(ballPositionY - rightY) - (0.3f) <= 0 and abs(ballPositionX - 1.73f) - (0.1f) <= 0){
+            if(prevadj != 0){
+                adj = prevadj;
+                prevadj = 0;
+            }
+            directX *= -1;
+            adj += 0.05;
+            bounce = 1.5;
+            Mix_PlayChannel(-1,hitSound,0);
+        }
+        else if (abs(ballPositionY - leftY) - (0.3f) <= 0 and abs(ballPositionX + 1.73f) - (0.1f) <= 0){
+            if(prevadj != 0){
+                adj = prevadj;
+                prevadj = 0;
+            }
+            directX *= -1;
+            adj += 0.05;
+            bounce = 1.5;
+            Mix_PlayChannel(-1,hitSound,0);
+        }
+        //Power Up Collisions
+        else if ((abs(ballPositionX - itemX[0]) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY[0]) - (ballSize + pSize)/2 <= 0)){
+            powerUpPlaced = false;
+            Mix_PlayChannel(-1, powSound, 0);
+            prevadj = adj;
+            adj += 1.0f;
+        }
+        else if ((abs(ballPositionX - itemX[1]) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY[1]) - (ballSize + pSize)/2 <= 0)){
+            spikePlaced = false;
+            Mix_PlayChannel(-1, powSound, 0);
+            prevadj = adj;
+            adj += 2.0f;
+        }else if ((abs(ballPositionX - itemX[2]) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY[2]) - (ballSize + pSize)/2 <= 0)){
+            slowPlaced = false;
+            Mix_PlayChannel(-1, powSound, 0);
+            prevadj = adj;
+            adj *= 0.5f;
         }
     }
     else if(mode == GAME_SCREEN2){
@@ -458,12 +492,14 @@ void checkCollisions(){
         else if ((abs(ballPositionY - 1.0f) - 0.1f) <= 0){
             reset();
             Mix_PlayChannel(-1,endSound,0);
-            if(p2score == 1){
+            //p2 wins, p2 leading
+            if(p2score > p1score){
                 p2score++;
                 mode = WINNING_SCREEN;
-            }else if (p1score == 1){
+            //p2 wins, p1 leading
+            }else if (p1score > p2score){
                 mode = SENT_BACK;
-                p2score = 0;
+                p1score = 0;
                 reset();
             }
         }
@@ -471,18 +507,20 @@ void checkCollisions(){
         else if (abs(ballPositionY + 1.0f) - (0.1f) <= 0){
             reset();
             Mix_PlayChannel(-1,endSound,0);
-            if(p1score == 1){
+            //p1 wins, p1 leading
+            if(p1score > p2score){
                 p1score++;
                 mode = WINNING_SCREEN;
-            }else if(p2score == 1){
+            //p1 wins, p2 leading
+            }else if(p2score > p1score){
                 mode = SENT_BACK;
-                p1score = 0;
+                p2score = 0;
                 reset();
             }
         }
     }
 }
-
+//---------------------------------------------------------Main Funcs-----------------------------------------------------------
 void Setup(){
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
     displayWindow = SDL_CreateWindow("Final Project", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 360, SDL_WINDOW_OPENGL);
@@ -530,33 +568,33 @@ void Update(float elapsed){
     checkCollisions();
 
     if(mode == GAME_SCREEN1 or mode == GAME_SCREEN3){
-        if(keys[SDL_SCANCODE_UP] and rightY < 0.635){
-            rightY += elapsed * adj;
+        if(keys[SDL_SCANCODE_UP] and rightY < 0.99f - (borW/2) - (boxW2/2)){
+            rightY += elapsed * adj * 1.1;
         }
-        if(keys[SDL_SCANCODE_DOWN] and rightY > -0.635){
-            rightY -= elapsed * adj;
+        if(keys[SDL_SCANCODE_DOWN] and rightY > -0.99f + (borW/2) + (boxW2/2)){
+            rightY -= elapsed * adj * 1.1;
         }
         // W/S to move left
-        if(keys[SDL_SCANCODE_W] and leftY < 0.635){
-            leftY += elapsed * adj;
+        if(keys[SDL_SCANCODE_W] and leftY < 0.99f - (borW/2) - (boxW2/2)){
+            leftY += elapsed * adj * 1.1;
         }
-        if(keys[SDL_SCANCODE_S] and leftY >  -0.635){
-            leftY -= elapsed * adj;
+        if(keys[SDL_SCANCODE_S] and leftY > -0.99f + (borW/2) + (boxW2/2)){
+            leftY -= elapsed * adj * 1.1;
         }
     }
     else if (mode == GAME_SCREEN2){
-        if(keys[SDL_SCANCODE_RIGHT] and downY < 1.215){
-            downY += elapsed * adj;
+        if(keys[SDL_SCANCODE_RIGHT] and downY < 1.762 - borW/2 - boxW/2){
+            downY += elapsed * adj * 1.1;
         }
-        if(keys[SDL_SCANCODE_LEFT] and downY > -1.215){
-            downY -= elapsed * adj;
+        if(keys[SDL_SCANCODE_LEFT] and downY > -1.762 + borW/2 + boxW/2){
+            downY -= elapsed * adj * 1.1;
         }
         // D/A to move left
-        if(keys[SDL_SCANCODE_D] and upY < 1.215){
-            upY += elapsed * adj;
+        if(keys[SDL_SCANCODE_D] and upY < 1.762 - borW/2 - boxW/2){
+            upY += elapsed * adj * 1.1;
         }
-        if(keys[SDL_SCANCODE_A] and upY > -1.215){
-            upY -= elapsed * adj;
+        if(keys[SDL_SCANCODE_A] and upY > -1.762 + borW/2 + boxW/2){
+            upY -= elapsed * adj * 1.1;
         }
     }
     else if (mode == TITLE_SCREEN or mode == GAME_OVER){
@@ -598,7 +636,8 @@ void Render(float elapsed){
             
             //introduce items
             if(mode == GAME_SCREEN3){
-                drawPowerUp("S");
+                drawPowerUp();
+
             }
         }
         else if (mode == GAME_SCREEN2){
@@ -694,6 +733,14 @@ void Render(float elapsed){
         DrawText(textprogram, font_texture, "BEEN EQAULIZED!", 0.25f, 0.0f, -1.6f, 0.0f);
         DrawText(textprogram, font_texture, "!!!!!!!!!!!!!!",0.25f,0.0f,-1.6f,-0.5f);
     }
+    else if(mode == TUTORIAL_SCREEN){
+        DrawText(textprogram, font_texture, "WASD or Control Keys", 0.15f, 0.0f,-1.50f,0.75f);
+        DrawText(textprogram, font_texture, "To Move!", 0.15f, 0.0f, -1.0f, 0.5f);
+        DrawText(textprogram, font_texture, "ESC to Quit",0.15f,0.0f,-1.5f,0.25f);
+        DrawText(textprogram, font_texture, "Space to Continue",0.15f,0.0f,-1.5f,0.0f);
+        DrawText(textprogram, font_texture, "You Must Win",0.20f,0.0f,-1.0f,-0.40f);
+        DrawText(textprogram, font_texture, "Three in a Row!", 0.20f, 0.0f, -1.25f, -0.65f);
+    }
     glDisableVertexAttribArray(program.positionAttribute);
     glDisableVertexAttribArray(program.texCoordAttribute);
     SDL_GL_SwapWindow(displayWindow);
@@ -708,7 +755,9 @@ bool Event(){
             }
             else if(event.key.keysym.scancode == SDL_SCANCODE_SPACE){
                 if(mode == TITLE_SCREEN){
-                    glUseProgram(program.programID);
+                    mode = TUTORIAL_SCREEN;
+                }
+                else if (mode == TUTORIAL_SCREEN){
                     mode = GAME_SCREEN1;
                 }
                 else if(mode == ADVANTAGE_SCREEN){
@@ -733,7 +782,16 @@ bool Event(){
     }
     return false;
 }
+//Removes sounds
+void CleanSounds() {
+    Mix_FreeChunk(powSound);
+    Mix_FreeChunk(endSound);
+    Mix_FreeChunk(hitSound);
+    
+    Mix_FreeMusic(bgMusic);
+}
 //-------------------------------------------------------------------------------------------------------------------------------
+
 int main(int argc, char *argv[])
 {
     Setup();
