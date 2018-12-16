@@ -24,7 +24,7 @@
 using namespace std;
 using namespace glm;
 enum GameMode {TITLE_SCREEN,TUTORIAL_SCREEN,GAME_SCREEN1,ADVANTAGE_SCREEN,GAME_SCREEN2,WINNING_SCREEN,GAME_SCREEN3,SENT_BACK,GAME_OVER};
-GameMode mode = GAME_SCREEN3;
+GameMode mode = TITLE_SCREEN;
 
 //---------------------------------------------------Variables--------------------------------------------------------------
 //Universal Stuff
@@ -730,7 +730,7 @@ void Render(float elapsed){
     }
     else if (mode == SENT_BACK){
         DrawText(textprogram, font_texture, "THE SCORE HAS", 0.25f, 0.0f,-1.50f,0.5f);
-        DrawText(textprogram, font_texture, "BEEN EQAULIZED!", 0.25f, 0.0f, -1.6f, 0.0f);
+        DrawText(textprogram, font_texture, "BEEN EQUALIZED!", 0.25f, 0.0f, -1.6f, 0.0f);
         DrawText(textprogram, font_texture, "!!!!!!!!!!!!!!",0.25f,0.0f,-1.6f,-0.5f);
     }
     else if(mode == TUTORIAL_SCREEN){
