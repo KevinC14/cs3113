@@ -448,13 +448,13 @@ void checkCollisions(){
             powerUpPlaced = false;
             Mix_PlayChannel(-1, powSound, 0);
             prevadj = adj;
-            adj += 1.0f;
+            adj += 0.5f;
         }
         else if ((abs(ballPositionX - itemX[1]) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY[1]) - (ballSize + pSize)/2 <= 0)){
             spikePlaced = false;
             Mix_PlayChannel(-1, powSound, 0);
             prevadj = adj;
-            adj += 2.0f;
+            adj += 1.0f;
         }else if ((abs(ballPositionX - itemX[2]) - (ballSize + pSize)/2 <=0) and (abs(ballPositionY-itemY[2]) - (ballSize + pSize)/2 <= 0)){
             slowPlaced = false;
             Mix_PlayChannel(-1, powSound, 0);
@@ -611,7 +611,7 @@ void Render(float elapsed){
     program.SetColor(1.0f,1.0f,1.0f,1.0f);
     if(mode == TITLE_SCREEN){
         DrawText(textprogram, font_texture, "Welcome To", .25f, 0.0f,-1.15f,0.5f);
-        DrawText(textprogram,font_texture,"Ultimate PONG",.225f,0.0f,-1.35f,-0.25f);
+        DrawText(textprogram,font_texture,"Battle PONG",.225f,0.0f,-1.35f,-0.25f);
     }
     else if(mode == GAME_SCREEN1 or mode == GAME_SCREEN2 or mode == GAME_SCREEN3){
         if(mode == GAME_SCREEN1 or mode == GAME_SCREEN3){
